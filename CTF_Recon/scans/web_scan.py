@@ -3,7 +3,7 @@ import os
 import logging
 
 WORDLIST = "wordlists/directories.txt"
-OUTPUT_DIR = "Output"
+OUTPUT_DIR = "output"
 
 
 def run_web(target):
@@ -32,20 +32,20 @@ def run_web(target):
                     "-x", "php,html,txt",   # common extensions
                     "-q"
                 ],
-                capture_Output=True,
+                capture_output=True,
                 text=True,
                 timeout=300
             )
 
-            Output = result.stdout
+            output = result.stdout
 
-            if Output:
+            if output:
                 with open(f"{OUTPUT_DIR}/web.txt", "w") as f:
                     f.write(f"Target URL: {url}\n\n")
-                    f.write(Output)
+                    f.write(output)
 
                 logging.info(f"Web scan successful on {url}")
-                return Output
+                return output
 
         except subprocess.TimeoutExpired:
             logging.error(f"Web scan timed out for {url}")

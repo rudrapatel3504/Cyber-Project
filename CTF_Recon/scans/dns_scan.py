@@ -2,8 +2,8 @@ import subprocess
 import os
 import logging
 
-WORDLIST = "Wordlists/subdomains.txt"
-OUTPUT_DIR = "Output"
+WORDLIST = "wordlists/subdomains.txt"
+OUTPUT_DIR = "output"
 
 
 def run_dns(target):
@@ -22,18 +22,18 @@ def run_dns(target):
                 "--threads", "50",
                 "--quiet"
             ],
-            capture_Output=True,
+            capture_output=True,
             text=True,
             timeout=300
         )
 
-        Output = result.stdout
+        output = result.stdout
 
         with open(f"{OUTPUT_DIR}/dns.txt", "w") as f:
-            f.write(Output)
+            f.write(output)
 
         logging.info("DNS scan completed successfully")
-        return Output
+        return output
 
     except subprocess.TimeoutExpired:
         logging.error("DNS scan timed out")

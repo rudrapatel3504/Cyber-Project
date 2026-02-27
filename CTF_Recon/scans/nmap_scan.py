@@ -2,7 +2,7 @@ import subprocess
 import os
 import logging
 
-OUTPUT_DIR = "Output"
+OUTPUT_DIR = "output"
 
 
 def run_nmap(target, fast_mode=False):
@@ -21,18 +21,18 @@ def run_nmap(target, fast_mode=False):
     try:
         result = subprocess.run(
             cmd,
-            capture_Output=True,
+            capture_output=True,
             text=True,
             timeout=300
         )
 
-        Output = result.stdout
+        output = result.stdout
 
         with open(f"{OUTPUT_DIR}/nmap.txt", "w") as f:
-            f.write(Output)
+            f.write(output)
 
         logging.info("Nmap scan completed successfully")
-        return Output
+        return output
 
     except subprocess.TimeoutExpired:
         logging.error("Nmap scan timed out")
