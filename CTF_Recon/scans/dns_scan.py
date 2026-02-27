@@ -2,7 +2,7 @@ import subprocess
 import os
 import logging
 
-WORDLIST = "Wordlists/subdomains.txt"
+WORDLIST = "wordlists/subdomains.txt"
 OUTPUT_DIR = "output"
 
 
@@ -12,22 +12,28 @@ def run_dns(target):
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+    if not os.path.exists(WORDLIST):
+        logging.error(f"Wordlist not found: {WORDLIST}")
+        print(f"[!] Wordlist not found: {WORDLIST}")
+        return ""
+
     try:
+        cmd = [
+            "gobuster",
+            "dns",
+            "--domain", target,
+            "--wordlist", WORDLIST,
+            "--threads", "50"
+        ]
+
         result = subprocess.run(
-            [
-                "gobuster",
-                "dns",
-                "--domain", target,
-                "--wordlist", WORDLIST,
-                "--threads", "50",
-                "--quiet"
-            ],
+            cmd,
             capture_output=True,
             text=True,
             timeout=300
         )
 
-        output = result.stdout
+        output = result.stdout if result.stdout else result.stderr
 
         with open(f"{OUTPUT_DIR}/dns.txt", "w") as f:
             f.write(output)
