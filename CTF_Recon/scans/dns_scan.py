@@ -17,10 +17,10 @@ def run_dns(target):
             [
                 "gobuster",
                 "dns",
-                "-d", target,
-                "-w", WORDLIST,
-                "-t", "50",        # 50 threads (faster + professional touch)
-                "-q"
+                "--domain", target,
+                "--wordlist", WORDLIST,
+                "--threads", "50",
+                "--quiet"
             ],
             capture_output=True,
             text=True,
