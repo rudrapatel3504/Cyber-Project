@@ -23,7 +23,8 @@ def run_dns(target):
             "dns",
             "--domain", target,
             "--wordlist", WORDLIST,
-            "--threads", "50"
+            "--threads", "50",
+            "quite"
         ]
 
         result = subprocess.run(
