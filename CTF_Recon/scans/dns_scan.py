@@ -2,7 +2,7 @@ import subprocess
 import os
 import logging
 
-WORDLIST = "wordlists/subdomains.txt"
+WORDLIST = "Wordlists/subdomains.txt"
 OUTPUT_DIR = "output"
 
 
