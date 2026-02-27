@@ -5,6 +5,8 @@ import logging
 import json
 import os
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor
+
 from scans import run_nmap, run_dns, run_web, run_http_analysis
 
 
@@ -48,35 +50,47 @@ def setup_logging():
 
 
 # -----------------------------
-# Main Execution
+# Main
 # -----------------------------
 def main():
     parser = argparse.ArgumentParser(
         description="Recon Automation Framework"
     )
+
     parser.add_argument(
         "-t", "--target",
         required=True,
         help="Target domain or IP address"
     )
 
+    parser.add_argument(
+        "--fast",
+        action="store_true",
+        help="Run fast Nmap scan (top ports only)"
+    )
+
     args = parser.parse_args()
     target = args.target
+    fast_mode = args.fast
 
     setup_logging()
 
     banner("Recon Automation Framework Started")
     print(f"Target     : {target}")
     print(f"Start Time : {datetime.now()}")
+    print(f"Scan Mode  : {'FAST' if fast_mode else 'FULL'}")
 
     logging.info(f"Recon started for target: {target}")
+    logging.info(f"Scan mode: {'FAST' if fast_mode else 'FULL'}")
 
     report = {
         "target": target,
+        "scan_mode": "FAST" if fast_mode else "FULL",
         "start_time": str(datetime.now()),
         "nmap": None,
         "dns": None,
-        "web": None
+        "web": None,
+        "http_headers": None
     }
 
     # -----------------------------
@@ -84,44 +98,41 @@ def main():
     # -----------------------------
     try:
         banner("Nmap Scan")
-        logging.info("Running Nmap scan")
-        nmap_output = run_nmap(target)
+        nmap_output = run_nmap(target, fast_mode)
         report["nmap"] = nmap_output
     except Exception as e:
-        logging.error(f"Nmap scan failed: {e}")
-        print(f"[!] Nmap scan failed: {e}")
+        logging.error(f"Nmap failed: {e}")
+        print(f"[!] Nmap failed: {e}")
         nmap_output = ""
 
     # -----------------------------
-    # DNS Scan
+    # Parallel DNS + Web
     # -----------------------------
-    if not is_ip(target):
-        try:
-            banner("DNS Enumeration")
-            logging.info("Running DNS scan")
-            dns_output = run_dns(target)
-            report["dns"] = dns_output
-        except Exception as e:
-            logging.error(f"DNS scan failed: {e}")
-            print(f"[!] DNS scan failed: {e}")
-    else:
-        logging.info("Target is IP. Skipping DNS scan.")
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        futures = []
+
+        if not is_ip(target):
+            futures.append(("dns", executor.submit(run_dns, target)))
+
+        if web_detected(nmap_output):
+            futures.append(("web", executor.submit(run_web, target)))
+
+        for name, future in futures:
+            try:
+                result = future.result()
+                report[name] = result
+            except Exception as e:
+                logging.error(f"{name} scan failed: {e}")
 
     # -----------------------------
-    # Web Scan
+    # HTTP Header Analysis
     # -----------------------------
-    if web_detected(nmap_output):
-        try:
-            banner("Web Enumeration")
-            logging.info("Running Web scan")
-            web_output = run_web(target)
-            report["web"] = web_output
-        except Exception as e:
-            logging.error(f"Web scan failed: {e}")
-            print(f"[!] Web scan failed: {e}")
-    else:
-        print("[!] No web service detected, skipping web scan")
-        logging.info("No web service detected")
+    try:
+        banner("HTTP Header Analysis")
+        headers = run_http_analysis(target)
+        report["http_headers"] = headers
+    except Exception as e:
+        logging.error(f"HTTP analysis failed: {e}")
 
     # -----------------------------
     # Save JSON Report
@@ -132,8 +143,9 @@ def main():
         json.dump(report, f, indent=4)
 
     logging.info("Recon completed successfully")
+
     banner("Recon Completed")
-    print("📁 Results saved in the 'output/' directory")
+    print("📁 Results saved in 'output/' directory")
     print("📄 Structured report saved as output/report.json")
 
 
