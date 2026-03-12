@@ -23,7 +23,7 @@ def banner():
  ╚██████╗   ██║   ██║         ██║  ██║███████╗╚██████╗╚██████╔╝██║ ╚████║
   ╚═════╝   ╚═╝   ╚═╝         ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝
 {Color.RESET}
-{Color.YELLOW}  CTF Recon Tool | Port Scan | Subdomain Enum | WHOIS | Dir Brute{Color.RESET}
+{Color.YELLOW}  CTF Recon Tool | Port Scan | Subdomain Enum | WHOIS | Dir Brute | PDF Unlock{Color.RESET}
   {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 """)
 

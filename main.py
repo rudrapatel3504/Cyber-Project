@@ -10,6 +10,7 @@ from CTF_Recon.port_scanner import PortScanner
 from CTF_Recon.subdomain_enum import SubdomainEnumerator
 from CTF_Recon.whois_lookup import WhoisLookup
 from CTF_Recon.dir_bruteforce import DirBruteforcer
+from CTF_Recon.pdf_unlocker import PdfUnlocker
 from CTF_Recon.utils import banner, print_section
 
 def run_interactive():
@@ -21,6 +22,7 @@ def run_interactive():
         print("  2. Subdomain Enumerator")
         print("  3. WHOIS / IP Lookup")
         print("  4. Directory Brute-Forcer")
+        print("  5. PDF Unlocker")
         print("  0. Exit")
 
         choice = input("\n> ").strip()
@@ -48,6 +50,12 @@ def run_interactive():
             wordlist = input("Wordlist path [default: CTF_Recon/wordlists/dirs.txt]: ").strip() or "CTF_Recon/wordlists/dirs.txt"
             bruteforcer = DirBruteforcer(url, wordlist)
             bruteforcer.run()
+
+        elif choice == "5":
+            pdf_path = input("Enter path to encrypted PDF: ").strip()
+            output_path = input("Output path [leave blank for auto]: ").strip() or None
+            unlocker = PdfUnlocker(pdf_path, output_path)
+            unlocker.run()
 
         elif choice == "0":
             print("\n[*] Exiting. Good luck on your CTF!\n")
@@ -86,6 +94,11 @@ def run_cli():
     db.add_argument("url", help="Target URL (e.g. http://example.com)")
     db.add_argument("--wordlist", default="CTF_Recon/wordlists/dirs.txt", help="Path to wordlist")
 
+    # PDF Unlocker
+    pu = subparsers.add_parser("pdfunlock", help="Unlock a password-protected PDF using date-based brute-force")
+    pu.add_argument("pdf", help="Path to the encrypted PDF file")
+    pu.add_argument("--output", default=None, help="Output path for unlocked PDF (default: <name>_unlocked.pdf)")
+
     args = parser.parse_args()
 
     if not args.module:
@@ -100,6 +113,8 @@ def run_cli():
         WhoisLookup(args.target).run()
     elif args.module == "dirbrute":
         DirBruteforcer(args.url, args.wordlist).run()
+    elif args.module == "pdfunlock":
+        PdfUnlocker(args.pdf, args.output).run()
 
 
 if __name__ == "__main__":

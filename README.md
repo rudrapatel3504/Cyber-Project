@@ -12,6 +12,7 @@ Web-App:- https://ctf-recon-web.onrender.com/
 | 🌐 Subdomain Enumerator | DNS brute-force subdomain discovery |
 | 📋 WHOIS / IP Lookup | WHOIS data + IP geolocation |
 | 📁 Directory Brute-Forcer | Hidden path/file discovery on web servers |
+| 🔓 PDF Unlocker | Brute-force date-based passwords on encrypted PDFs |
 
 ## Installation
 
@@ -19,6 +20,8 @@ Web-App:- https://ctf-recon-web.onrender.com/
 git clone https://github.com/rudrapatel3504/Cyber-Project
 cd Cyber-Project
 pip install -r requirements.txt
+# For PDF Unlocker (Linux only):
+sudo apt install pdfcrack qpdf
 ```
 
 ## Usage
@@ -42,6 +45,10 @@ python main.py whois example.com
 
 # Directory brute-force
 python main.py dirbrute http://example.com --wordlist CTF_Recon/wordlists/dirs.txt
+
+# PDF Unlocker
+python main.py pdfunlock secret.pdf
+python main.py pdfunlock secret.pdf --output unlocked.pdf
 ```
 
 ## Project Structure
