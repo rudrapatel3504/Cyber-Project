@@ -16,12 +16,13 @@ COMMON_PORTS = {
 }
 
 class PortScanner:
-    def __init__(self, target: str, start_port: int = 1, end_port: int = 1024, timeout: float = 0.5, threads: int = 100):
+    def __init__(self, target: str, start_port: int = 1, end_port: int = 1024, timeout: float = 0.5, threads: int = 100, quiet: bool = False):
         self.target = target
         self.start_port = start_port
         self.end_port = end_port
         self.timeout = timeout
         self.threads = threads
+        self.quiet = quiet
         self.open_ports = []
 
     def _resolve_target(self) -> str | None:
@@ -29,7 +30,8 @@ class PortScanner:
             ip = socket.gethostbyname(self.target)
             return ip
         except socket.gaierror:
-            error(f"Could not resolve hostname: {self.target}")
+            if not self.quiet:
+                error(f"Could not resolve hostname: {self.target}")
             return None
 
     def _scan_port(self, port: int) -> int | None:
@@ -44,13 +46,15 @@ class PortScanner:
         return None
 
     def run(self):
-        print_section(f"Port Scanner → {self.target}")
+        if not self.quiet:
+            print_section(f"Port Scanner → {self.target}")
         ip = self._resolve_target()
         if not ip:
             return
 
-        info(f"Resolved to: {ip}")
-        info(f"Scanning ports {self.start_port}–{self.end_port} with {self.threads} threads...\n")
+        if not self.quiet:
+            info(f"Resolved to: {ip}")
+            info(f"Scanning ports {self.start_port}–{self.end_port} with {self.threads} threads...\n")
 
         ports = range(self.start_port, self.end_port + 1)
 
@@ -59,12 +63,13 @@ class PortScanner:
 
         self.open_ports = [p for p in results if p is not None]
 
-        if self.open_ports:
-            print(f"{'PORT':<10} {'SERVICE':<15} {'STATE'}")
-            print("-" * 35)
-            for port in sorted(self.open_ports):
-                service = COMMON_PORTS.get(port, "Unknown")
-                success(f"{port:<10} {service:<15} OPEN")
-            print(f"\n[*] {len(self.open_ports)} open port(s) found.")
-        else:
-            warning("No open ports found in the given range.")
+        if not self.quiet:
+            if self.open_ports:
+                print(f"{'PORT':<10} {'SERVICE':<15} {'STATE'}")
+                print("-" * 35)
+                for port in sorted(self.open_ports):
+                    service = COMMON_PORTS.get(port, "Unknown")
+                    success(f"{port:<10} {service:<15} OPEN")
+                print(f"\n[*] {len(self.open_ports)} open port(s) found.")
+            else:
+                warning("No open ports found in the given range.")

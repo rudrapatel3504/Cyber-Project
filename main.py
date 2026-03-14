@@ -12,6 +12,7 @@ from CTF_Recon.whois_lookup import WhoisLookup
 from CTF_Recon.dir_bruteforce import DirBruteforcer
 from CTF_Recon.pdf_unlocker import PdfUnlocker
 from CTF_Recon.wordlist_generator import WordlistGenerator
+from CTF_Recon.full_recon import FullRecon
 from CTF_Recon.utils import banner, print_section
 
 def run_interactive():
@@ -19,47 +20,55 @@ def run_interactive():
     banner()
     while True:
         print("\n[*] Select a module:")
-        print("  1. Port Scanner")
-        print("  2. Subdomain Enumerator")
-        print("  3. WHOIS / IP Lookup")
-        print("  4. Directory Brute-Forcer")
-        print("  5. PDF Unlocker")
-        print("  6. Wordlist Generator")
+        print("  1. Full Automated Recon")
+        print("  2. Port Scanner")
+        print("  3. Subdomain Enumerator")
+        print("  4. WHOIS / IP Lookup")
+        print("  5. Directory Brute-Forcer")
+        print("  6. PDF Unlocker")
+        print("  7. Wordlist Generator")
         print("  0. Exit")
 
         choice = input("\n> ").strip()
 
         if choice == "1":
+            target = input("Enter target domain/IP: ").strip()
+            if target:
+                FullRecon(target).run()
+            else:
+                print("[-] Target cannot be empty.")
+
+        elif choice == "2":
             target = input("Enter target IP/hostname: ").strip()
             port_range = input("Port range (e.g. 1-1024) [default: 1-1024]: ").strip() or "1-1024"
             start, end = map(int, port_range.split("-"))
             scanner = PortScanner(target, start, end)
             scanner.run()
 
-        elif choice == "2":
+        elif choice == "3":
             domain = input("Enter domain (e.g. example.com): ").strip()
             wordlist = input("Wordlist path [default: CTF_Recon/wordlists/subdomains.txt]: ").strip() or "CTF_Recon/wordlists/subdomains.txt"
             enumerator = SubdomainEnumerator(domain, wordlist)
             enumerator.run()
 
-        elif choice == "3":
+        elif choice == "4":
             target = input("Enter domain or IP: ").strip()
             lookup = WhoisLookup(target)
             lookup.run()
 
-        elif choice == "4":
+        elif choice == "5":
             url = input("Enter target URL (e.g. http://example.com): ").strip()
             wordlist = input("Wordlist path [default: CTF_Recon/wordlists/dirs.txt]: ").strip() or "CTF_Recon/wordlists/dirs.txt"
             bruteforcer = DirBruteforcer(url, wordlist)
             bruteforcer.run()
 
-        elif choice == "5":
+        elif choice == "6":
             pdf_path = input("Enter path to encrypted PDF: ").strip()
             output_path = input("Output path [leave blank for auto]: ").strip() or None
             unlocker = PdfUnlocker(pdf_path, output_path)
             unlocker.run()
 
-        elif choice == "6":
+        elif choice == "7":
             names_input = input("Enter target name(s) separated by space: ").strip()
             names = names_input.split() if names_input else []
             y_from = input("Year FROM [default: 1980]: ").strip()
@@ -90,6 +99,10 @@ def run_cli():
         formatter_class=argparse.RawTextHelpFormatter
     )
     subparsers = parser.add_subparsers(dest="module", help="Module to run")
+
+    # Full Recon
+    fr = subparsers.add_parser("fullrecon", help="Run PortScan, Subdomain Enum, WHOIS, and Dir Brute simultaneously")
+    fr.add_argument("target", help="Target domain or IP")
 
     # Port Scanner
     ps = subparsers.add_parser("portscan", help="Scan open ports on a target")
@@ -130,7 +143,9 @@ def run_cli():
         parser.print_help()
         sys.exit(1)
 
-    if args.module == "portscan":
+    if args.module == "fullrecon":
+        FullRecon(args.target).run()
+    elif args.module == "portscan":
         PortScanner(args.target, args.start, args.end).run()
     elif args.module == "subdomain":
         SubdomainEnumerator(args.domain, args.wordlist).run()

@@ -22,12 +22,13 @@ INTERESTING_CODES = {
 }
 
 class DirBruteforcer:
-    def __init__(self, base_url: str, wordlist_path: str, threads: int = 30, extensions: list[str] = None):
+    def __init__(self, base_url: str, wordlist_path: str, threads: int = 30, extensions: list[str] = None, quiet: bool = False):
         self.base_url = base_url.rstrip("/")
         self.wordlist_path = wordlist_path
         self.threads = threads
         # Optionally probe for file extensions too
         self.extensions = extensions or ["", ".php", ".html", ".txt", ".bak"]
+        self.quiet = quiet
         self.found = []
 
     def _load_wordlist(self) -> list[str]:
@@ -35,7 +36,8 @@ class DirBruteforcer:
             with open(self.wordlist_path, "r") as f:
                 return [line.strip() for line in f if line.strip()]
         except FileNotFoundError:
-            error(f"Wordlist not found: {self.wordlist_path}")
+            if not self.quiet:
+                error(f"Wordlist not found: {self.wordlist_path}")
             return []
 
     def _probe(self, path: str) -> tuple[str, int] | None:
@@ -64,17 +66,18 @@ class DirBruteforcer:
         return targets
 
     def run(self):
-        print_section(f"Directory Brute-Forcer → {self.base_url}")
+        if not self.quiet:
+            print_section(f"Directory Brute-Forcer → {self.base_url}")
         words = self._load_wordlist()
         if not words:
             return
 
         targets = self._build_targets(words)
-        info(f"Loaded {len(words)} words × {len(self.extensions)} extension(s) = {len(targets)} probes.")
-        info(f"Running with {self.threads} threads...\n")
-
-        print(f"{'STATUS':<10} {'MEANING':<25} {'URL'}")
-        print("-" * 80)
+        if not self.quiet:
+            info(f"Loaded {len(words)} words × {len(self.extensions)} extension(s) = {len(targets)} probes.")
+            info(f"Running with {self.threads} threads...\n")
+            print(f"{'STATUS':<10} {'MEANING':<25} {'URL'}")
+            print("-" * 80)
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.threads) as executor:
             results = executor.map(self._probe, targets)
@@ -83,10 +86,12 @@ class DirBruteforcer:
             if result:
                 url, code = result
                 meaning = INTERESTING_CODES.get(code, "?")
-                self.found.append(result)
-                if code == 200:
-                    success(f"{code:<10} {meaning:<25} {url}")
-                else:
-                    warning(f"{code:<10} {meaning:<25} {url}")
+                self.found.append({"url": url, "status": code, "meaning": meaning})
+                if not self.quiet:
+                    if code == 200:
+                        success(f"{code:<10} {meaning:<25} {url}")
+                    else:
+                        warning(f"{code:<10} {meaning:<25} {url}")
 
-        print(f"\n[*] {len(self.found)} interesting path(s) found.")
+        if not self.quiet:
+            print(f"\n[*] {len(self.found)} interesting path(s) found.")

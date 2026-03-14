@@ -8,11 +8,13 @@ Web-App:- https://ctf-recon-web.onrender.com/
 
 | Module | Description |
 |--------|-------------|
+| ⚡ Full Automated Recon | Runs all 4 web/network scans concurrently |
 | 🔍 Port Scanner | Fast TCP port scan with service detection |
 | 🌐 Subdomain Enumerator | DNS brute-force subdomain discovery |
 | 📋 WHOIS / IP Lookup | WHOIS data + IP geolocation |
 | 📁 Directory Brute-Forcer | Hidden path/file discovery on web servers |
 | 🔓 PDF Unlocker | Brute-force date-based passwords on encrypted PDFs |
+| 📝 Wordlist Generator | Generate targeted password wordlists based on names and years |
 
 ## Installation
 
@@ -34,6 +36,9 @@ python main.py
 ### CLI Mode
 
 ```bash
+# Full Automated Recon
+python main.py fullrecon example.com
+
 # Port scan
 python main.py portscan <target> --start 1 --end 1024
 
@@ -49,6 +54,9 @@ python main.py dirbrute http://example.com --wordlist CTF_Recon/wordlists/dirs.t
 # PDF Unlocker
 python main.py pdfunlock secret.pdf
 python main.py pdfunlock secret.pdf --output unlocked.pdf
+
+# Wordlist Generator
+python main.py wordlist admin john --year-from 1980 --year-to 2010
 ```
 
 ## Project Structure
@@ -60,10 +68,13 @@ Cyber-Project/
 ├── CTF_Recon/
 │   ├── __init__.py
 │   ├── utils.py                   # Shared helpers (colors, banner, etc.)
+│   ├── full_recon.py              # Orchestrator for concurrent scans
 │   ├── port_scanner.py            # Threaded TCP port scanner
 │   ├── subdomain_enum.py          # DNS subdomain brute-forcer
 │   ├── whois_lookup.py            # WHOIS + IP geolocation
 │   ├── dir_bruteforce.py          # HTTP directory brute-forcer
+│   ├── pdf_unlocker.py            # PDF password cracking utility
+│   ├── wordlist_generator.py      # Custom wordlist generator
 │   └── wordlists/
 │       ├── subdomains.txt
 │       └── dirs.txt

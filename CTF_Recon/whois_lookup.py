@@ -10,8 +10,11 @@ import whois
 from CTF_Recon.utils import print_section, success, error, info, warning
 
 class WhoisLookup:
-    def __init__(self, target: str):
+    def __init__(self, target: str, quiet: bool = False):
         self.target = target.strip()
+        self.quiet = quiet
+        self.geo_data = {}
+        self.whois_data = {}
 
     def _is_ip(self) -> bool:
         try:
@@ -24,7 +27,8 @@ class WhoisLookup:
         try:
             return socket.gethostbyname(self.target)
         except socket.gaierror:
-            error(f"Could not resolve: {self.target}")
+            if not self.quiet:
+                error(f"Could not resolve: {self.target}")
             return None
 
     def _geo_lookup(self, ip: str):
@@ -34,24 +38,27 @@ class WhoisLookup:
             with urllib.request.urlopen(url, timeout=5) as resp:
                 data = json.loads(resp.read().decode())
             if data.get("status") == "success":
-                print(f"\n{'IP Geolocation':}")
-                print("-" * 40)
                 fields = ["country", "regionName", "city", "zip", "isp", "org", "as"]
                 for field in fields:
-                    val = data.get(field, "N/A")
-                    if val:
-                        success(f"{field.capitalize():<12}: {val}")
+                    if data.get(field):
+                        self.geo_data[field] = data.get(field)
+
+                if not self.quiet:
+                    print(f"\n{'IP Geolocation':}")
+                    print("-" * 40)
+                    for k, v in self.geo_data.items():
+                        success(f"{k.capitalize():<12}: {v}")
             else:
-                warning("Geolocation lookup failed (private/reserved IP?).")
+                if not self.quiet:
+                    warning("Geolocation lookup failed (private/reserved IP?).")
         except Exception as e:
-            warning(f"Geolocation unavailable: {e}")
+            if not self.quiet:
+                warning(f"Geolocation unavailable: {e}")
 
     def _whois_lookup(self):
         """Perform WHOIS lookup using python-whois."""
         try:
             w = whois.whois(self.target)
-            print(f"\n{'WHOIS Info':}")
-            print("-" * 40)
             fields = {
                 "Domain Name": w.domain_name,
                 "Registrar": w.registrar,
@@ -63,23 +70,31 @@ class WhoisLookup:
                 "Emails": w.emails,
                 "Org": w.org,
             }
+            
             for label, value in fields.items():
                 if value:
-                    # Handle lists
                     if isinstance(value, list):
                         value = ", ".join(str(v) for v in value[:3])
-                    success(f"{label:<18}: {value}")
+                    self.whois_data[label] = value
+
+            if not self.quiet:
+                print(f"\n{'WHOIS Info':}")
+                print("-" * 40)
+                for k, v in self.whois_data.items():
+                    success(f"{k:<18}: {v}")
         except Exception as e:
-            warning(f"WHOIS lookup failed: {e}")
+            if not self.quiet:
+                warning(f"WHOIS lookup failed: {e}")
 
     def run(self):
-        print_section(f"WHOIS / IP Lookup → {self.target}")
+        if not self.quiet:
+            print_section(f"WHOIS / IP Lookup → {self.target}")
 
         ip = self.target if self._is_ip() else self._resolve_ip()
         if not ip:
             return
 
-        if not self._is_ip():
+        if not self._is_ip() and not self.quiet:
             info(f"Resolved IP: {ip}")
 
         # Always do geo lookup on the IP
@@ -89,4 +104,5 @@ class WhoisLookup:
         if not self._is_ip():
             self._whois_lookup()
         else:
-            info("Target is an IP — skipping WHOIS domain query.")
+            if not self.quiet:
+                info("Target is an IP — skipping WHOIS domain query.")
