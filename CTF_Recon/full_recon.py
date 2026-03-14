@@ -1,10 +1,10 @@
 import threading
-import json
 import time
 from CTF_Recon.port_scanner import PortScanner
 from CTF_Recon.subdomain_enum import SubdomainEnumerator
 from CTF_Recon.whois_lookup import WhoisLookup
 from CTF_Recon.dir_bruteforce import DirBruteforcer
+from CTF_Recon.report_generator import generate_pdf_report
 from CTF_Recon.utils import print_section, info, success, warning, error
 
 class FullRecon:
@@ -56,20 +56,13 @@ class FullRecon:
         self.report["directories"] = db.found
 
         # Save Report
-        report_file = f"full_recon_report_{self.target.replace('.', '_')}.json"
+        report_file = f"full_recon_report_{self.target.replace('.', '_')}.pdf"
         
-        class DateTimeEncoder(json.JSONEncoder):
-            def default(self, obj):
-                if hasattr(obj, 'isoformat'):
-                    return obj.isoformat()
-                return super().default(obj)
-                
         try:
-            with open(report_file, "w") as f:
-                json.dump(self.report, f, indent=4, cls=DateTimeEncoder)
+            generate_pdf_report(self.report, report_file)
             success(f"Full report saved to: {report_file}")
         except Exception as e:
-            error(f"Failed to save report: {e}")
+            error(f"Failed to generate PDF report: {e}")
 
         # Print a brief summary
         print("\n--- Recon Summary ---")
