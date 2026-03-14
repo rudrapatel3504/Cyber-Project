@@ -137,17 +137,22 @@ def generate_pdf_report(report_dict, output_path):
 
         pdf.set_font('helvetica', '', 11)
         for sd in sds:
-            sub = str(sd[0])[:50]
-            ip = str(sd[1])[:30]
+            if isinstance(sd, dict):
+                sub = str(sd.get("subdomain", ""))[:50]
+                ip  = str(sd.get("ip", ""))[:30]
+            else:
+                sub = str(sd[0])[:50]
+                ip  = str(sd[1])[:30]
             pdf.cell(100, 8, sub, border=1)
             pdf.cell(60, 8, ip, border=1)
             pdf.ln()
     pdf.ln(8)
 
     # ----- 3. WHOIS / Geo -----
+    # The web API returns keys "geo" and "whois"; CLI stores as "geo_data"/"whois_data"
     whois_dict = report_dict.get("whois", {}) or {}
-    geo = whois_dict.get("geo_data", {}) or {}
-    wd = whois_dict.get("whois_data", {}) or {}
+    geo = whois_dict.get("geo") or whois_dict.get("geo_data") or {}
+    wd  = whois_dict.get("whois") or whois_dict.get("whois_data") or {}
 
     pdf.add_page()
     pdf.chapter_title("3. Target Geolocation & WHOIS")
