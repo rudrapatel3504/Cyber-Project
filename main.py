@@ -11,6 +11,7 @@ from CTF_Recon.subdomain_enum import SubdomainEnumerator
 from CTF_Recon.whois_lookup import WhoisLookup
 from CTF_Recon.dir_bruteforce import DirBruteforcer
 from CTF_Recon.pdf_unlocker import PdfUnlocker
+from CTF_Recon.wordlist_generator import WordlistGenerator
 from CTF_Recon.utils import banner, print_section
 
 def run_interactive():
@@ -23,6 +24,7 @@ def run_interactive():
         print("  3. WHOIS / IP Lookup")
         print("  4. Directory Brute-Forcer")
         print("  5. PDF Unlocker")
+        print("  6. Wordlist Generator")
         print("  0. Exit")
 
         choice = input("\n> ").strip()
@@ -56,6 +58,21 @@ def run_interactive():
             output_path = input("Output path [leave blank for auto]: ").strip() or None
             unlocker = PdfUnlocker(pdf_path, output_path)
             unlocker.run()
+
+        elif choice == "6":
+            names_input = input("Enter target name(s) separated by space: ").strip()
+            names = names_input.split() if names_input else []
+            y_from = input("Year FROM [default: 1980]: ").strip()
+            y_to = input("Year TO [default: 2010]: ").strip()
+            brute = input("Include 4-digit brute force (y/n)? [default: y]: ").strip().lower()
+            output = input("Output path [leave blank for auto]: ").strip() or None
+
+            y_from = int(y_from) if y_from.isdigit() else 1980
+            y_to = int(y_to) if y_to.isdigit() else 2010
+            include_brute = brute != 'n'
+
+            generator = WordlistGenerator(names, y_from, y_to, include_brute, output)
+            generator.run()
 
         elif choice == "0":
             print("\n[*] Exiting. Good luck on your CTF!\n")
@@ -99,6 +116,14 @@ def run_cli():
     pu.add_argument("pdf", help="Path to the encrypted PDF file")
     pu.add_argument("--output", default=None, help="Output path for unlocked PDF (default: <name>_unlocked.pdf)")
 
+    # Wordlist Generator
+    wg = subparsers.add_parser("wordlist", help="Generate targeted wordlists")
+    wg.add_argument("names", nargs="+", help="Target name(s)")
+    wg.add_argument("--year-from", type=int, default=1980, help="Start year (default: 1980)")
+    wg.add_argument("--year-to", type=int, default=2010, help="End year (default: 2010)")
+    wg.add_argument("--no-brute", action="store_true", help="Skip 4-digit brute-force patterns")
+    wg.add_argument("--output", default=None, help="Output path")
+
     args = parser.parse_args()
 
     if not args.module:
@@ -115,6 +140,8 @@ def run_cli():
         DirBruteforcer(args.url, args.wordlist).run()
     elif args.module == "pdfunlock":
         PdfUnlocker(args.pdf, args.output).run()
+    elif args.module == "wordlist":
+        WordlistGenerator(args.names, args.year_from, args.year_to, not args.no_brute, args.output).run()
 
 
 if __name__ == "__main__":
