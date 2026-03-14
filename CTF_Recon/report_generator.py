@@ -118,8 +118,16 @@ def generate_pdf_report(report_dict, output_path):
 
         pdf.set_font('helvetica', '', 11)
         for p in ps:
-            pdf.cell(30, 8, str(p.get("port", ""))[:10], border=1, align="C")
-            pdf.cell(60, 8, str(p.get("service", ""))[:30], border=1, align="C")
+            if isinstance(p, dict):
+                port = str(p.get("port", ""))[:10]
+                service = str(p.get("service", ""))[:30]
+            else:
+                port = str(p)[:10]
+                from CTF_Recon.port_scanner import COMMON_PORTS
+                service = str(COMMON_PORTS.get(p, "Unknown"))[:30]
+                
+            pdf.cell(30, 8, port, border=1, align="C")
+            pdf.cell(60, 8, service, border=1, align="C")
             pdf.cell(30, 8, "OPEN", border=1, align="C")
             pdf.ln()
     pdf.ln(8)
